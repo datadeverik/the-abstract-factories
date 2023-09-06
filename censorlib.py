@@ -6,12 +6,16 @@ def expand_arr(arr, new_size):
     tile_counts = np.ceil(np.asarray(new_size) / np.asarray(arr.shape)).astype(int)
     return np.tile(arr, tile_counts)[tuple(map(slice, new_size))]
 
+def censor_fast(img, mask, key):
+    'Encrypt the portion of the image covered by the mask with a key.'
+    xor_key = np.zeros_like(img)
+    np.copyto(xor_key, key, where=mask)
+    return img ^ xor_key
+ 
 def censor(img, mask, key):
     'Encrypt the portion of the image covered by the mask with a key.'
     _key = expand_arr(key, img.shape)
-    xor_key = np.zeros_like(img)
-    np.copyto(xor_key, _key, where=mask)
-    return img ^ xor_key
+    return censor_fast(img, mask, _key)
 
 def deepen(arr, n):   # Used for turning (a, b) -> (a, b, n)
     'Copy the same array along a new axis'
