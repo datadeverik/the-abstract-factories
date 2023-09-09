@@ -6,12 +6,16 @@ def expand_arr(arr, new_size):
     tile_counts = np.ceil(np.asarray(new_size) / np.asarray(arr.shape)).astype(int)
     return np.tile(arr, tile_counts)[tuple(map(slice, new_size))]
 
+def censor_fast(img, mask, key):
+    'Encrypt the portion of the image covered by the mask with a key.'
+    xor_key = np.zeros_like(img)
+    np.copyto(xor_key, key, where=mask)
+    return img ^ xor_key
+ 
 def censor(img, mask, key):
     'Encrypt the portion of the image covered by the mask with a key.'
     _key = expand_arr(key, img.shape)
-    xor_key = np.zeros_like(img)
-    np.copyto(xor_key, _key, where=mask)
-    return img ^ xor_key
+    return censor_fast(img, mask, _key)
 
 def deepen(arr, n):   # Used for turning (a, b) -> (a, b, n)
     'Copy the same array along a new axis'
@@ -19,10 +23,10 @@ def deepen(arr, n):   # Used for turning (a, b) -> (a, b, n)
     dest = [arr.ndim] + list(range(arr.ndim))
     return np.moveaxis(np.repeat(arr[np.newaxis, ...], n, axis=0), source, dest)
 
-def decensor(img, key, threshold=0.25):
+def decensor(img, key, threshold=0.1):
     'Attempt to detect the censored region and decensor it.'
-    mask = deepen(cv.blur(cv.Canny(img, 500, 600), (5, 5)) > threshold, 3)
-    return censor(encrypt, mask, key)
+    mask = deepen(cv.blur(cv.Canny(img, 500, 600), (20, 20)) > threshold, 3)
+    return censor(img, mask, key)
 
 def steno_censor(img, cover, mask, key, unitx=2, unity=2):
     'Replacement of censor, except embeds ciphertext into an integrated image.'
