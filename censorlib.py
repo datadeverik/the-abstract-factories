@@ -23,10 +23,10 @@ def deepen(arr, n):   # Used for turning (a, b) -> (a, b, n)
     dest = [arr.ndim] + list(range(arr.ndim))
     return np.moveaxis(np.repeat(arr[np.newaxis, ...], n, axis=0), source, dest)
 
-def decensor(img, key, threshold=0.25):
+def decensor(img, key, threshold=0.1):
     'Attempt to detect the censored region and decensor it.'
-    mask = deepen(cv.blur(cv.Canny(img, 500, 600), (5, 5)) > threshold, 3)
-    return censor(encrypt, mask, key)
+    mask = deepen(cv.blur(cv.Canny(img, 500, 600), (20, 20)) > threshold, 3)
+    return censor(img, mask, key)
 
 def steno_censor(img, cover, mask, key, unitx=2, unity=2):
     'Replacement of censor, except embeds ciphertext into an integrated image.'
